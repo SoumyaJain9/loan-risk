@@ -1,0 +1,17 @@
+{
+  "Logistic Regression": {
+    "AUC": 0.7137,
+    "Recall_1": 0.61,
+    "Precision_1": 0.38
+  },
+  "XGBoost": {
+    "AUC": 0.721,
+    "Recall_1": 0.65,
+    "Precision_1": 0.37
+  },
+  "LightGBM": {
+    "AUC": 0.7177,
+    "Recall_1": 0.65,
+    "Precision_1": 0.37
+  }
+}

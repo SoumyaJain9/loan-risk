@@ -2,9 +2,18 @@
 
 An end-to-end credit risk system built on the LendingClub Accepted Loans dataset (2007–2017). Predicts probability of loan default, explains predictions with SHAP, and serves live predictions via a FastAPI backend + Streamlit dashboard.
 
+[![Medium Article](https://img.shields.io/badge/Medium-Read%20the%20Technical%20Deep%20Dive-black?style=for-the-badge&logo=medium)](https://medium.com/@soumya09062006/i-removed-the-most-important-feature-from-my-loan-risk-model-almost-nothing-happened-3a100310f198)
+
 **Scope note:** this is a risk-scoring system for loans that have already been originated (e.g. for risk-based pricing or portfolio monitoring) — not a loan approval/rejection classifier. The public dataset only contains already-accepted loans, so an accept/reject model isn't something this data can honestly support. Details in [`decisions.md`](decisions.md).
 
-**Live demo:** loanrisk.soumyajain.com · **API docs:** [api link]/docs
+**Live demo:** [loanrisk.soumyajain.online](https://loanrisk.soumyajain.online/) · **Technical Write-up:** [Read on Medium](https://medium.com/@soumya09062006/i-removed-the-most-important-feature-from-my-loan-risk-model-almost-nothing-happened-3a100310f198)
+
+---
+
+## 📖 Featured Article
+I wrote a detailed technical write-up detailing the engineering trade-offs, target leakage prevention, and right-censoring findings behind this system:
+
+👉 **[I Removed the Most Important Feature From My Loan Model. Almost Nothing Happened.](https://your-medium-article-link-here)**
 
 ---
 

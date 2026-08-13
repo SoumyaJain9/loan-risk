@@ -113,11 +113,17 @@ section[data-testid="stSidebar"] {
     border-right: 1px solid #E2E8F0 !important;
 }
 
-/* Subtle styling for input labels */
-.stWidgetLabel p {
-    font-weight: 500 !important;
-    color: #475569 !important;
+/* Styling for input labels - Forced High Contrast */
+label, 
+.stWidgetLabel, 
+div[data-testid="stWidgetLabel"] label, 
+div[data-testid="stWidgetLabel"] p,
+section[data-testid="stSidebar"] label,
+section[data-testid="stSidebar"] p {
+    color: #0F172A !important; /* Dark Slate for high visibility */
+    font-weight: 600 !important;
     font-size: 0.88rem !important;
+    opacity: 1 !important;
 }
 
 /* Hide Streamlit default hamburger menu and footer for cleaner app feel */

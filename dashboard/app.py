@@ -1,6 +1,7 @@
-import streamlit as st
+import os
 import requests
 import pickle
+import streamlit as st
 
 # ---------- PAGE CONFIGURATION ----------
 st.set_page_config(
@@ -217,7 +218,8 @@ with st.sidebar:
 st.markdown("<h2 style='margin-top: 0; margin-bottom: 4px;'>Applicant Risk Assessment</h2>", unsafe_allow_html=True)
 st.markdown("<p style='color: #64748B; font-size: 0.95rem; margin-bottom: 25px;'>Compile the applicant's financial attributes below to generate the risk underwriting scorecard and model explanation.</p>", unsafe_allow_html=True)
 
-API_URL = "http://127.0.0.1:8000/predict"
+# ---------- BACKEND API CONFIGURATION ----------
+API_URL = os.getenv("BACKEND_URL", "https://loan-risk-api-gind.onrender.com").rstrip("/") + "/predict"
 
 # ---------- QUICK ASSESSMENT ----------
 st.subheader("Core Financial Profile")
@@ -477,4 +479,4 @@ if st.button("Assess Credit Risk", type="primary"):
             st.markdown(clean_html(shap_card_html), unsafe_allow_html=True)
             
         except requests.exceptions.ConnectionError:
-            st.error("Connection Error: Unable to reach the credit prediction service on port 8000. Please ensure the FastAPI server is initialized and running.")
+            st.error("Connection Error: Unable to reach the credit prediction service. Please verify the FastAPI backend status.")

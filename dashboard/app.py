@@ -359,130 +359,141 @@ if st.button("Assess Credit Risk", type="primary"):
     
     with st.spinner("Calculating Underwriting Scorecard..."):
         try:
-            response = requests.post(API_URL, json={"features": features})
-            result = response.json()
+            response = requests.post(API_URL, json={"features": features}, timeout=30)
             
-            risk_pct = result["risk_probability"] * 100
-            
-            # Select colors and labels based on risk threshold
-            if risk_pct < 15:
-                bg_color = "#ECFDF5"      # Emerald 50
-                text_color = "#065F46"    # Emerald 800
-                border_color = "#10B981"  # Emerald 500
-                risk_tier = "LOW RISK (Fast-Track Approved)"
-            elif risk_pct < 30:
-                bg_color = "#FFFBEB"      # Amber 50
-                text_color = "#92400E"    # Amber 800
-                border_color = "#F59E0B"  # Amber 500
-                risk_tier = "MODERATE RISK (Manual Audit Flagged)"
-            else:
-                bg_color = "#FEF2F2"      # Red 50
-                text_color = "#991B1B"    # Red 800
-                border_color = "#EF4444"  # Red 500
-                risk_tier = "HIGH RISK (Declined Guideline)"
+            if response.status_code == 200:
+                result = response.json()
                 
-            # Render Results Section Title
-            st.markdown("<h3 style='margin-top: 25px; margin-bottom: 15px;'>Underwriting Assessment Results</h3>", unsafe_allow_html=True)
-            
-            # Render Results Scorecard Dashboard Card
-            scorecard_html = f"""
-            <div style="background-color: {bg_color}; border: 1px solid {border_color}; border-left: 6px solid {border_color}; padding: 24px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);">
-                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
-                    <div>
-                        <h4 style="margin: 0; color: #0F172A; font-size: 1.15rem; font-weight: 700;">Credit Risk Decision Matrix</h4>
-                        <p style="margin: 4px 0 0 0; color: #475569; font-size: 0.9rem;">
-                            Model-derived default probability and credit profile evaluation metrics.
-                        </p>
-                    </div>
-                    <div style="text-align: right; min-width: 200px;">
-                        <span style="font-size: 2.6rem; font-weight: 800; color: {border_color}; font-family: -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1;">
-                            {risk_pct:.1f}%
-                        </span>
-                        <span style="display: block; font-size: 0.78rem; font-weight: 700; color: {text_color}; letter-spacing: 0.05em; margin-top: 4px; text-transform: uppercase;">
-                            {risk_tier}
-                        </span>
-                    </div>
-                </div>
-                <!-- Linear Risk Progress Bar -->
-                <div style="margin-top: 20px; width: 100%; background-color: #E2E8F0; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #E2E8F0;">
-                    <div style="width: {min(risk_pct, 100.0):.1f}%; background-color: {border_color}; height: 100%; border-radius: 6px; transition: width 0.8s ease-out;"></div>
-                </div>
-            </div>
-            """
-            st.markdown(clean_html(scorecard_html), unsafe_allow_html=True)
-            
-            # Render Core Metrics Details Grid
-            mcol1, mcol2, mcol3 = st.columns(3)
-            with mcol1:
-                st.metric(label="Default Probability", value=f"{risk_pct:.2f}%", delta=None)
-            with mcol2:
-                st.metric(label="Calculated Credit Score", value=str(fico_avg), delta=None)
-            with mcol3:
-                st.metric(label="Debt-to-Income (DTI)", value=f"{dti:.1f}%", delta=None)
+                risk_pct = result["risk_probability"] * 100
                 
-            st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
-            
-            # ---------- SHAP GRAPHICAL VISUALIZATION ----------
-            # Extract risk factors
-            factors = result.get("top_risk_factors", [])
-            max_impact = max(abs(f['impact']) for f in factors) if factors else 1.0
-            if max_impact == 0:
-                max_impact = 1.0
-                
-            html_factors = ""
-            for factor in factors:
-                feat = factor["feature"]
-                imp = factor["impact"]
-                display_name = get_feature_display_name(feat)
-                
-                # Check impact direction
-                if imp > 0:
-                    color = "#EF4444"      # Red 500
-                    direction_icon = "▲"
-                    direction_label = "Increases Risk"
-                    sign = "+"
+                # Select colors and labels based on risk threshold
+                if risk_pct < 15:
+                    bg_color = "#ECFDF5"      # Emerald 50
+                    text_color = "#065F46"    # Emerald 800
+                    border_color = "#10B981"  # Emerald 500
+                    risk_tier = "LOW RISK (Fast-Track Approved)"
+                elif risk_pct < 30:
+                    bg_color = "#FFFBEB"      # Amber 50
+                    text_color = "#92400E"    # Amber 800
+                    border_color = "#F59E0B"  # Amber 500
+                    risk_tier = "MODERATE RISK (Manual Audit Flagged)"
                 else:
-                    color = "#10B981"      # Emerald 500
-                    direction_icon = "▼"
-                    direction_label = "Reduces Risk"
-                    sign = ""
+                    bg_color = "#FEF2F2"      # Red 50
+                    text_color = "#991B1B"    # Red 800
+                    border_color = "#EF4444"  # Red 500
+                    risk_tier = "HIGH RISK (Declined Guideline)"
+                    
+                # Render Results Section Title
+                st.markdown("<h3 style='margin-top: 25px; margin-bottom: 15px;'>Underwriting Assessment Results</h3>", unsafe_allow_html=True)
                 
-                # Calculate bar width proportion (minimum 4% to remain visible)
-                width_pct = max(4, int((abs(imp) / max_impact) * 100))
-                
-                html_factors += f"""
-                <div style="margin-bottom: 16px;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
-                        <div style="font-weight: 600; font-size: 0.92rem; color: #1E293B; display: flex; align-items: center; gap: 6px;">
-                            <span>{display_name}</span>
-                            <span style="font-size: 0.78rem; color: #94A3B8; font-weight: 400;">({feat})</span>
+                # Render Results Scorecard Dashboard Card
+                scorecard_html = f"""
+                <div style="background-color: {bg_color}; border: 1px solid {border_color}; border-left: 6px solid {border_color}; padding: 24px; border-radius: 12px; margin-bottom: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);">
+                    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+                        <div>
+                            <h4 style="margin: 0; color: #0F172A; font-size: 1.15rem; font-weight: 700;">Credit Risk Decision Matrix</h4>
+                            <p style="margin: 4px 0 0 0; color: #475569; font-size: 0.9rem;">
+                                Model-derived default probability and credit profile evaluation metrics.
+                            </p>
                         </div>
-                        <div style="font-size: 0.8rem; font-weight: 600; color: {color}; display: flex; align-items: center; gap: 6px;">
-                            <span style="background-color: {color}15; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">{direction_label}</span>
-                            <span style="font-size: 0.85rem;">{direction_icon}</span>
-                            <span style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 700;">{sign}{imp:.4f}</span>
+                        <div style="text-align: right; min-width: 200px;">
+                            <span style="font-size: 2.6rem; font-weight: 800; color: {border_color}; font-family: -apple-system, BlinkMacSystemFont, sans-serif; line-height: 1;">
+                                {risk_pct:.1f}%
+                            </span>
+                            <span style="display: block; font-size: 0.78rem; font-weight: 700; color: {text_color}; letter-spacing: 0.05em; margin-top: 4px; text-transform: uppercase;">
+                                {risk_tier}
+                            </span>
                         </div>
                     </div>
-                    <div style="width: 100%; background-color: #F1F5F9; height: 10px; border-radius: 5px; overflow: hidden; border: 1px solid #E2E8F0;">
-                        <div style="width: {width_pct}%; background-color: {color}; height: 100%; border-radius: 5px; transition: width 0.6s ease-out;"></div>
+                    <!-- Linear Risk Progress Bar -->
+                    <div style="margin-top: 20px; width: 100%; background-color: #E2E8F0; height: 12px; border-radius: 6px; overflow: hidden; border: 1px solid #E2E8F0;">
+                        <div style="width: {min(risk_pct, 100.0):.1f}%; background-color: {border_color}; height: 100%; border-radius: 6px; transition: width 0.8s ease-out;"></div>
                     </div>
                 </div>
                 """
+                st.markdown(clean_html(scorecard_html), unsafe_allow_html=True)
                 
-            shap_card_html = f"""
-            <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-top: 10px;">
-                <h4 style="margin-top: 0; margin-bottom: 6px; color: #0F172A; font-size: 1.05rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-                    Explainable AI (XAI) Risk Factors
-                </h4>
-                <p style="margin-top: 0; margin-bottom: 20px; color: #64748B; font-size: 0.85rem; line-height: 1.4;">
-                    The dashboard below charts the mathematical drivers of the applicant's credit decision score using Shapley value decomposition. 
-                    <span style="color: #EF4444; font-weight: 600;">Red factors (▲)</span> escalate predicted risk, while 
-                    <span style="color: #10B981; font-weight: 600;">green factors (▼)</span> mitigate or reduce risk.
-                </p>
-                {html_factors}
-            </div>
-            """
-            st.markdown(clean_html(shap_card_html), unsafe_allow_html=True)
+                # Render Core Metrics Details Grid
+                mcol1, mcol2, mcol3 = st.columns(3)
+                with mcol1:
+                    st.metric(label="Default Probability", value=f"{risk_pct:.2f}%", delta=None)
+                with mcol2:
+                    st.metric(label="Calculated Credit Score", value=str(fico_avg), delta=None)
+                with mcol3:
+                    st.metric(label="Debt-to-Income (DTI)", value=f"{dti:.1f}%", delta=None)
+                    
+                st.markdown("<div style='margin-top: 15px;'></div>", unsafe_allow_html=True)
+                
+                # ---------- SHAP GRAPHICAL VISUALIZATION ----------
+                # Extract risk factors
+                factors = result.get("top_risk_factors", [])
+                max_impact = max(abs(f['impact']) for f in factors) if factors else 1.0
+                if max_impact == 0:
+                    max_impact = 1.0
+                    
+                html_factors = ""
+                for factor in factors:
+                    feat = factor["feature"]
+                    imp = factor["impact"]
+                    display_name = get_feature_display_name(feat)
+                    
+                    # Check impact direction
+                    if imp > 0:
+                        color = "#EF4444"      # Red 500
+                        direction_icon = "▲"
+                        direction_label = "Increases Risk"
+                        sign = "+"
+                    else:
+                        color = "#10B981"      # Emerald 500
+                        direction_icon = "▼"
+                        direction_label = "Reduces Risk"
+                        sign = ""
+                    
+                    # Calculate bar width proportion (minimum 4% to remain visible)
+                    width_pct = max(4, int((abs(imp) / max_impact) * 100))
+                    
+                    html_factors += f"""
+                    <div style="margin-bottom: 16px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
+                            <div style="font-weight: 600; font-size: 0.92rem; color: #1E293B; display: flex; align-items: center; gap: 6px;">
+                                <span>{display_name}</span>
+                                <span style="font-size: 0.78rem; color: #94A3B8; font-weight: 400;">({feat})</span>
+                            </div>
+                            <div style="font-size: 0.8rem; font-weight: 600; color: {color}; display: flex; align-items: center; gap: 6px;">
+                                <span style="background-color: {color}15; padding: 2px 6px; border-radius: 4px; font-size: 0.75rem;">{direction_label}</span>
+                                <span style="font-size: 0.85rem;">{direction_icon}</span>
+                                <span style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-weight: 700;">{sign}{imp:.4f}</span>
+                            </div>
+                        </div>
+                        <div style="width: 100%; background-color: #F1F5F9; height: 10px; border-radius: 5px; overflow: hidden; border: 1px solid #E2E8F0;">
+                            <div style="width: {width_pct}%; background-color: {color}; height: 100%; border-radius: 5px; transition: width 0.6s ease-out;"></div>
+                        </div>
+                    </div>
+                    """
+                    
+                shap_card_html = f"""
+                <div style="background-color: #FFFFFF; border: 1px solid #E2E8F0; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-top: 10px;">
+                    <h4 style="margin-top: 0; margin-bottom: 6px; color: #0F172A; font-size: 1.05rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+                        Explainable AI (XAI) Risk Factors
+                    </h4>
+                    <p style="margin-top: 0; margin-bottom: 20px; color: #64748B; font-size: 0.85rem; line-height: 1.4;">
+                        The dashboard below charts the mathematical drivers of the applicant's credit decision score using Shapley value decomposition. 
+                        <span style="color: #EF4444; font-weight: 600;">Red factors (▲)</span> escalate predicted risk, while 
+                        <span style="color: #10B981; font-weight: 600;">green factors (▼)</span> mitigate or reduce risk.
+                    </p>
+                    {html_factors}
+                </div>
+                """
+                st.markdown(clean_html(shap_card_html), unsafe_allow_html=True)
             
+            else:
+                st.error(f"Backend Server Error ({response.status_code}). The API server might be starting up or experienced an issue.")
+
+        except requests.exceptions.JSONDecodeError:
+            st.error("Received an invalid response format from the server. If the Render service was sleeping, please wait a few seconds and try submitting again.")
         except requests.exceptions.ConnectionError:
             st.error("Connection Error: Unable to reach the credit prediction service. Please verify the FastAPI backend status.")
+        except requests.exceptions.Timeout:
+            st.error("Request Timed Out: The backend took too long to respond. Render free instances may take ~30 seconds to wake up from sleep.")
+        except Exception as e:
+            st.error(f"An unexpected error occurred: {str(e)}")

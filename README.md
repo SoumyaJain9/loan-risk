@@ -10,13 +10,6 @@ An end-to-end credit risk system built on the LendingClub Accepted Loans dataset
 
 ---
 
-## 📖 Featured Article
-I wrote a detailed technical write-up detailing the engineering trade-offs, target leakage prevention, and right-censoring findings behind this system:
-
-👉 **[I Removed the Most Important Feature From My Loan Model. Almost Nothing Happened.](https://your-medium-article-link-here)**
-
----
-
 ## Results
 
 | Model | AUC-ROC | Recall (default class) |
